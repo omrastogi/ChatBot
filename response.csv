@@ -1,0 +1,18 @@
+ids,tag,patterns,responses
+0,Description,"['who is Om', 'Om', 'Tell me about Om', 'Om', 'About Om', 'Who OM?', 'Om who', 'details', ""Om's detail""]","['Om Rastogi is a young engineer', 'Om is student looking for opportunity to help imporve the world']"
+1,Skills,"['Skills', 'mastery', 'ability', 'capability', 'prowess', 'what are his skill', 'what skills', 'his ability', ""om's skills""]","['Om is skilled in Programming and Machine Learning. He also has little know how of some other fields.', 'Om claims to be skilled in Python']"
+2,greeting,"['Hi', 'How are you', 'Is anyone there?', 'Hello', 'Good day', 'Whats up', 'hey', 'hola', 'hollo']","['Hello!', 'Good to see you again!', 'Hi there, how can I help?']"
+3,goodbye,"['cya', 'See you later', 'Goodbye', 'I am Leaving', 'Have a Good day']","['Sad to see you go :(', 'Talk to you later', 'Goodbye!']"
+4,name,"['what is your name', 'what should I call you', 'whats your name?', 'you', 'who are you']","[""Everybody call's me Tim."", ""I'm Tim, Om's friend."", 'Call me Tim.']"
+5,howareyou,"['how are you', 'whats up', 'you']","['I am good, waiting for my next update']"
+6,Whatdoyoudo,"['What do you do here', 'Do you conduct traninig', 'what do you reccommend?', 'what all do you have', 'what service is provided here']","['I am here to interact', 'I am here just to talk about Om, all the time', 'I am a demonstration of PROJECT Chatbot']"
+7,hours,"['when are you guys open', 'your hours', 'hours of operation', 'his details']","['Ping at omrastogi@gmail.com', 'I work 24hr']"
+8,noanswer,[],"[""Sorry, can't understand you"", 'Please give me more info', 'Not sure I understand']"
+9,contact,"['How to reach you', 'I am interested', 'I want to do something', 'Your Contact', 'How to contact om']","['Call at 8588988194', 'Ping at omrastogi@gmail.com']"
+10,interest,"['Om does', 'His Interest', 'Hobbies', 'What do he do', 'What does Om do']",['Om like to read books and listen music']
+11,location,"['Where are you location', 'How to reach you', 'office location', 'where is you office', 'How to reach the office']","[""Om's a engineering student, he lives in delhi""]"
+12,No,"['I dont think so', 'naah', 'No', 'Nope', 'Nope', 'n']",['Please ask your queries']
+13,Yes,"['ok', 'hmm', 'okay', 'yes', 'yup', 'ya', 'y']","['Please ask your queries', 'How to help you']"
+14,Tell Me,"['Tell me', 'tell', 'me', 'say', 'speak', 'tel me']","['What do you want to know', 'What is it']"
+15,I don't know,"['age', 'height', 'what is', 'address', 'kites', 'friends', 'college', 'personal life', 'locality']","['I may not know what your asking', ""Om doesn't tell me much about himself"", 'Can you rephrase your words', 'Pardon me,I am not very smart', ""I don't have info""]"
+16,Colabration,"['Colabration', 'colaborate', 'partners', 'would Om like', 'like']","['What do you want to know', 'What is it', 'Om is excited guy do contact him']"
