@@ -1,91 +1,80 @@
-from torch import nn
-import torch as tf
-from sublayer import  MultiHeadAttention
-from word_embeding import Embedder
-import config
-from pytorch_lightning import LightningModule
-import torch.nn.functional as F
-from torch.optim import Adam
+import torch
+import os
+import time
+import pandas as pd
+from transformers import AutoModel, BertTokenizerFast
 
 
-class Model(LightningModule):
-    def __init__(self):
-        super(Model, self).__init__()
-        # self.embedder = Embedder()
-        self.dropout = nn.Dropout(0.2)
+class Pattern_Search:
+    def __init__(self, model_path="google/bert_uncased_L-6_H-256_A-4"):
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda')
+        else:
+            self.device = torch.device('cpu')
+        self.df = None
+        self.repr = None
+        self.tm_sentence = None
+        self.representation = None
+        self.model = AutoModel.from_pretrained(model_path).to(self.device)
+        self.tokenizer = BertTokenizerFast.from_pretrained(model_path)
 
-        self.input_layer = nn.Sequential(
-            nn.Linear(96, 64),
-            nn.GELU(),
-            nn.Linear(64, 48))
+    def build_representation(self, df, batch_size=1000):
+        self.df = df
+        self.tm_sentence = list(df["Question"].astype(str))
+        l = len(self.tm_sentence)
+        for i in range(0, l, batch_size):
+            repr = self.get_embeddings(self.tm_sentence[i:i + batch_size], self.tokenizer, self.model, self.device)
+            ques = list(self.df["Question"][i:i + batch_size])
+            answ = list(self.df["Answer"][i:i + batch_size])
+            newdf = pd.DataFrame({'question':ques, 'answer':answ, 'token':repr.detach().tolist()})
+            if i==0:
+                newdf.to_csv("data/buffer.csv", mode='w', index=False)
+            else:
+                newdf.to_csv("data/buffer.csv", mode='a', index=False, header=False)
 
-        self.self_attention_lg = MultiHeadAttention(heads=8, d_model=48)
+        newdf = pd.read_csv("data/buffer.csv")
+        newdf["token"] = pd.Series(newdf["token"].apply(eval).to_list())
+        newdf.to_parquet('data/cbot.parquet.gzip', compression='gzip')
+        os.remove("data/buffer.csv")
 
-        self.lg_to_md = nn.Sequential(
-            nn.Linear(48, 40),
-            nn.GELU(),
-            nn.Linear(40, 32))
+    def load_representations(self, pq_file='data/cbot.parquet.gzip'):
+        S = time.time()
+        self.df = pd.read_parquet(pq_file)
+        self.repr = torch.Tensor(self.df['token']).type(torch.float16).to(self.device)
 
-        self.self_attention_md = MultiHeadAttention(heads=8, d_model=32)
+    def infer(self, inp):
+        enc = self.get_embeddings(inp, self.tokenizer, self.model, self.device).type(torch.float16)
+        cos_sm = self.batch_cosine_similarity(enc, self.repr)
 
-        self.feed_forward_md = nn.Sequential(
-            nn.Linear(32, 64),
-            nn.GELU(),
-            nn.Linear(64, 32))
+        ans = self.df.iloc[int(torch.argmax(cos_sm))]['answer']
+        score = float(torch.max(cos_sm))
+        return ans, score
 
-        self.md_to_sm = nn.Sequential(
-            nn.Linear(32, 32),
-            nn.GELU(),
-            nn.Linear(32, config.n))
+    @staticmethod
+    def batch_cosine_similarity(inp1, inp2):
+        S = time.time()
+        dot_prd = torch.matmul(inp1, inp2.transpose(0, 1))
+        print("Dot product time,", time.time()-S)
+        sum1 = torch.unsqueeze(torch.sum(inp1 ** 2, dim=1), 1) ** 0.5
+        sum2 = torch.unsqueeze(torch.sum(inp2 ** 2, dim=1), 1) ** 0.5
+        dot_prd = torch.div(dot_prd, sum1)
+        dot_prd = torch.div(dot_prd, sum2.transpose(0, 1))
+        return dot_prd
 
-        self.softmax = nn.Softmax(dim=1)
-
-    def forward(self, x):
-        # x = tf.Tensor(self.embedder.generate(seq))
-        x = self.input_layer(x)
-        x = self.self_attention_lg(x, x, x)
-        x = self.lg_to_md(x)
-        x = self.dropout(x)
-        x = self.self_attention_md(x, x, x)
-        x = tf.mean(x, dim=1)
-        x = self.md_to_sm(x)
-        x = self.dropout(x)
-        out = self.softmax(x)
-        return out
-
-    def total_params(self):
-        return sum(p.numel() for p in self.parameters())
-
-    def validation_step(self, batch, batch_idx):
-        pat, lab = batch
-        pred = self.forward(pat)
-        loss = F.cross_entropy(pred.view(-1, pred.size(-1)), lab.contiguous().view(-1), ignore_index=1)
-        self.log('val_loss', loss)
-        return loss
-
-
-    def test_step(self, batch, batch_idx):
-        pat, lab = batch
-        pred = self.forward(pat)
-        loss = F.cross_entropy(pred.view(-1, pred.size(-1)), lab.contiguous().view(-1), ignore_index=1)
-        self.log('test_loss', loss)
-        return loss
-
-
-    def training_step(self, batch, batch_idx):
-        pat, lab = batch
-        pred = self.forward(pat)
-        loss = F.cross_entropy(pred.view(-1, pred.size(-1)), lab.contiguous().view(-1), ignore_index=1)
-        self.log('train_loss', loss)
-        return loss
-
-    def configure_optimizers(self):
-        optimizer = Adam(self.parameters())
-        return optimizer
+    @staticmethod
+    def get_embeddings(src, tokenizer, model, device):
+        token = tokenizer(src, return_token_type_ids=False, padding=True, return_tensors="pt").to(device)
+        ids, mask = token['input_ids'], token['attention_mask']
+        if ids.shape[1] > 512:  # max length of input for bert is 512
+            ids, mask = ids[:, :500], mask[:, :500]
+        with torch.no_grad():
+            _, x = model(input_ids=ids, attention_mask=mask, return_dict=False)
+        return x
 
 
 if __name__ == "__main__":
-    model = Model()
-    seq = Embedder().generate("how are you")
-    print(model(seq))
-    print(model.total_params())
+    # df = pd.read_csv("data/cbot.csv")
+    obj = Pattern_Search()
+    # obj.build_representation(df=df)
+    obj.load_representations()
+    print(obj.infer("Where is AI"))
