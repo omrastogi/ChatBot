@@ -1,0 +1,98 @@
+{% extends 'layout.html' %}
+{% block body %}
+<script>
+    function ajax(event){
+    // event.preventDefault();
+
+
+    var req = new XMLHttpRequest();
+    // updateScroll();
+    
+    req.onreadystatechange = function(){
+    if(req.readyState == 4 && req.status == 200)
+    {
+      
+        // console.log('condition')
+    document.getElementById('chats').innerHTML = req.responseText;
+    }
+    }
+    // console.log('refresh')
+    req.open('POST', '/chats', true);
+
+    req.send();
+        
+    
+    }
+    setInterval(function(){ajax()}, 5);
+
+
+
+
+    var scrolled = false;
+    function updateScroll(){
+        if(!scrolled){
+            var element = document.getElementById("chat-box");
+            element.scrollTop = element.scrollHeight+ 1;
+        }
+    }
+
+    document.getElementById("chat-box").on('scroll', function(){
+        scrolled=true;
+    });
+
+
+ 
+    // function updateScroll(){
+    //     var out = document.getElementById("chat-box");
+    //     // allow 1px inaccuracy by adding 1
+    //     var isScrolledToBottom = out.scrollHeight - out.clientHeight <= out.scrollTop + 1;
+
+    //     if(isScrolledToBottom)
+    //         out.scrollTop = out.scrollHeight - out.clientHeight;
+ 
+    // }
+
+
+
+</script>
+<div class="row" onload="ajax();">
+    <!-- <div class="col-xs-1"></div> -->
+ 
+    <div class="col-xs-6" style="background-color: #f5f5f5;/*margin: 0px 10px;*/ border-radius: 4px;  width:350px;">
+
+        <!-- {% if session.lid %} -->
+            {% if session.name != session.s_name %}
+                <div style="text-align: center;font-size: 18px; color: #22aa45;background-color: #ddd;border-radius: 4px;bottom: 50px; right: 10px;">
+                    <span>{{ session.name}}</span>
+                </div>
+
+
+                <script>updateScroll();</script>
+
+                <div id="chat-box" style="overflow-y: scroll; width:300px; height: 350px; padding: 10px 0px 0px 0px;">
+                    
+                    <div id="chats"></div>
+                 </div>
+                
+                {% from "includes/_formhelpers.html" import render_field %}
+                <div>
+                    <form method="POST" action="">
+                    <div class="form-group">
+                        {{render_field(form.body, class_="form-control", value="", placeholder="Enter your text...")}}
+                    </div>
+                    <button onclick="updateScroll()" type="submit" class="btn btn-primary pull-right">Send</button>
+                    </form>
+                </div>
+               
+           <!--  {% else %} -->
+            <!--     <div style="text-align: center;">
+                    <h1>Welcome to Chat Room</h1>
+                    <p class="lead">Select users and start chat...</p>
+                </div> -->
+           <!--  {% endif %}
+        {% endif %} -->
+
+    <!-- </div> -->
+    <!-- <div class="col-xs-1"></div> -->
+</div>
+{% endblock %}

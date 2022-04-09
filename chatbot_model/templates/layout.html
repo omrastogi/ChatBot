@@ -1,0 +1,38 @@
+<html>
+    <head>
+
+        <title>Chatbot</title>
+        </style>
+              
+        
+    </head>
+    <script>console.log('Restarting')</script>
+    <body style="background-image: url({{ url_for('static', filename='image/bgone.jpg') }})">
+
+      
+
+        <div class="chat-popup" id="myForm">
+         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        
+
+        <div class="container">
+
+            {% include 'includes/_flashmsg.html' %}
+            {% block body %}  {% endblock %}
+
+
+    
+        </div>
+        </div>
+        
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"></script>
+        <script src="//cdn.ckeditor.com/4.6.2/basic/ckeditor.js"></script>
+        <script type="text/javascript">
+            CKEDITOR.replace('editor')
+        </script>
+
+
+    </body>
+</html>
